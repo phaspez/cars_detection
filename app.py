@@ -1,4 +1,3 @@
-# save_blur_and_name_app.py
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk

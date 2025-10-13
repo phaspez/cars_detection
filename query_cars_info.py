@@ -1,0 +1,47 @@
+import pandas as pd
+from thefuzz import process, fuzz
+
+data_path = "cars_info/automobiles_cleaned_2025_10_13.csv"
+
+df = pd.read_csv(data_path, sep=";")
+
+def find_cars(query: str, limit=5):
+    clean_series = df['search_text'].dropna().astype(str)
+    top_matches = process.extract(query, clean_series.tolist(), limit=limit, scorer=fuzz.partial_ratio)
+
+    def _safe(val):
+        if pd.isna(val):
+            return None
+        try:
+            return val.item()
+        except Exception:
+            return val
+
+    results = []
+    seen_combinations = set()
+
+    for text_match, score in top_matches:
+        matching_indices = clean_series[clean_series == text_match].index.tolist()
+
+        for original_index in matching_indices[:limit]:
+            if original_index in df.index:
+                combo = (text_match, int(score), int(original_index))
+                if combo in seen_combinations:
+                    continue
+                seen_combinations.add(combo)
+
+                model = df.loc[original_index]
+                results.append({
+                    'suggestion_text': _safe(text_match),
+                    'score': int(score),
+                    'original_index': int(original_index),
+                    'brand_name': _safe(model.get('brand_name')),
+                    'engine_name': _safe(model.get('engine_name')),
+                    'length_mm': _safe(model.get('length_mm')),
+                    'width_mm': _safe(model.get('width_mm')),
+                    'height_mm': _safe(model.get('height_mm')),
+                    'kg': _safe(model.get('kg')),
+                    'rank': _safe(model.get('rank')),
+                })
+
+    return {'query': query, 'results': results}
