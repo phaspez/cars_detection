@@ -1,0 +1,65 @@
+/* custom_font.qss */
+/* Apply monospace fallback globally */
+QWidget,
+QMainWindow,
+QDialog,
+QGroupBox,
+QMenuBar,
+QMenu,
+QToolBar,
+QStatusBar,
+QLabel,
+QPushButton,
+QRadioButton,
+QCheckBox,
+QComboBox,
+QSpinBox,
+QDoubleSpinBox,
+QLineEdit,
+QTextEdit,
+QPlainTextEdit,
+QTabWidget,
+QTabBar,
+QListWidget,
+QTableWidget,
+QTreeView,
+QHeaderView,
+QAbstractItemView {{
+    font-family: "JetBrains Mono", Consolas, Monaco, "Courier New";
+    font-size: 10pt;
+    font-weight: 400;
+}}
+
+/* Ensure table headers use same fallback */
+QHeaderView::section {{
+    font-family: "JetBrains Mono", Consolas, Monaco, "Courier New";
+    font-size: 9pt;
+    font-weight: 600;
+}}
+
+/* Buttons and controls can have slightly smaller text */
+QPushButton,
+QToolButton {{
+    font-size: 9pt;
+}}
+
+/* Make monospaced edits explicitly monospace */
+QLineEdit,
+QPlainTextEdit,
+QTextEdit {{
+    font-family: "JetBrains Mono", Consolas, Monaco, "Courier New";
+}}
+
+/* Menu and context menus */
+QMenu,
+QMenuBar {{
+    font-family: "JetBrains Mono", Consolas, Monaco, "Courier New";
+    font-size: 10pt;
+}}
+
+/* Keep selection readable */
+QWidget::item:selected,
+QListView::item:selected,
+QTreeView::item:selected {{
+    outline: none;
+}}

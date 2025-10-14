@@ -13,6 +13,7 @@ CLASS_NAMES = [
     "bmw","mercedes","vinfast","toyota","mitsubishi",
     "ford","honda","hyundai","kia","bien_so"
 ]
+
 LOGO_CLASS_INDICES = set(range(0, 9)) 
 BIENSO_INDEX = 9
 

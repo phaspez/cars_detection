@@ -3,7 +3,7 @@ import sys
 from PyQt5 import QtWidgets, QtGui, QtCore
 from logo_detection import *
 from query_cars_info import *
-
+import numpy as np
 from qt_material import apply_stylesheet
 
 MAX_DISPLAY_W, MAX_DISPLAY_H = 640, 480
@@ -22,7 +22,6 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Car detection")
-        # Make room for a right-hand vertical control panel
         self.setFixedSize(MAX_DISPLAY_W + 400, MAX_DISPLAY_H + 80)
 
         try:
@@ -35,42 +34,34 @@ class MainWindow(QtWidgets.QWidget):
         self.last_logo_name = None
         self.last_image_path = None
 
-        # Fonts: attempt to use Inter; if not installed system will fallback
-        self.app_font = QtGui.QFont("Inter", 10)
-        self.header_font = QtGui.QFont("Inter", 12, QtGui.QFont.Weight.Bold)
-
-        # Image display (left)
+        # image display (left)
         self.image_label = QtWidgets.QLabel()
         self.image_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.image_label.setFixedSize(MAX_DISPLAY_W, MAX_DISPLAY_H)
         self.image_label.setStyleSheet("background-color: #111;")
-        self.image_label.setFont(self.app_font)
 
-        # Side panel (right) with vertical layout
+        # side panel (right) with vertical layout
         side_widget = QtWidgets.QWidget()
         side_layout = QtWidgets.QVBoxLayout(side_widget)
         side_layout.setContentsMargins(12, 12, 12, 12)
         side_layout.setSpacing(12)
 
         btn_choose = QtWidgets.QPushButton("Chọn ảnh")
-        btn_choose.setFont(self.app_font)
         btn_choose.clicked.connect(self.choose_image)
 
         btn_save = QtWidgets.QPushButton("Lưu ảnh & tên (TXT)")
-        btn_save.setFont(self.app_font)
         btn_save.clicked.connect(self.save_result)
 
-        # Vertical group for buttons (stacked)
+        # vertical group for buttons (stacked)
         btn_group = QtWidgets.QVBoxLayout()
         btn_group.addWidget(btn_choose)
         btn_group.addWidget(btn_save)
         btn_group.addStretch(1)
 
-        # Info label
+        # info label
         self.info_label = QtWidgets.QLabel("Chưa có ảnh")
         self.info_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.info_label.setWordWrap(True)
-        self.info_label.setFont(self.header_font)
 
         self.info_table = QtWidgets.QTableWidget()
         self.info_table.setColumnCount(2)
@@ -78,22 +69,28 @@ class MainWindow(QtWidgets.QWidget):
         self.info_table.verticalHeader().setVisible(False)
         self.info_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.info_table.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-        self.info_table.setFont(self.app_font)
         self.info_table.setFixedHeight(200)
+        self.info_table.setWordWrap(True)
+        self.info_table.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.info_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        self.info_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         self.info_table.horizontalHeader().setStretchLastSection(True)
         # add label and table to the side layout (replace the previous single info_label placement)
         side_layout.addWidget(self.info_label)
         side_layout.addWidget(self.info_table)
 
         self.results_list = QtWidgets.QListWidget()
-        self.results_list.setFont(self.app_font)
         self.results_list.setFixedHeight(100)
+        self.results_list.setWordWrap(True)
+        self.results_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.results_list.itemClicked.connect(self.on_result_item_clicked)
-        side_layout.addWidget(self.results_list)
 
-        # Add widgets to side layout
+        self.results_list_desc = QtWidgets.QLabel("Kết quả tìm kiếm:")
+
+        # add widgets to side layout
+        side_layout.addWidget(self.results_list_desc)
+        side_layout.addWidget(self.results_list)
         side_layout.addLayout(btn_group)
-        side_layout.addWidget(self.info_label)
         side_layout.addStretch(2)
 
         # Main horizontal layout: image on left, side panel on right
@@ -185,7 +182,6 @@ class MainWindow(QtWidgets.QWidget):
 
         self.last_result_bgr = img_proc
         self.last_logo_name = best_logo_name
-        self.info_label.setText(f"Logo tốt nhất: {best_conf_text}")
         pix = cv2_to_qpixmap(img_proc)
         self.image_label.setPixmap(pix)
 
@@ -226,15 +222,14 @@ class MainWindow(QtWidgets.QWidget):
             return f"{int(val)}{unit}" if (val is not None and str(val) != "nan") else "N/A"
 
         fields = [
-            ("Selected", r.get('suggestion_text') or "Unknown"),
+            ("Rank", r.get('rank') if r.get('rank') is not None else "N/A"),
             ("Score", str(r.get('score')) if r.get('score') is not None else "N/A"),
-            ("Brand", r.get('brand_name') or "Unknown"),
-            ("Engine", r.get('engine_name') or "Unknown"),
+            ("Weight", fmt(r.get('kg'), " kg")),
             ("Length", fmt(r.get('length_mm'), " mm")),
             ("Width", fmt(r.get('width_mm'), " mm")),
             ("Height", fmt(r.get('height_mm'), " mm")),
-            ("Weight", fmt(r.get('kg'), " kg")),
-            ("Rank", r.get('rank') if r.get('rank') is not None else "N/A"),
+            ("Brand", r.get('brand_name') or "Unknown"),
+            ("Engine", r.get('engine_name') or "Unknown"),
         ]
 
         self.info_table.clearContents()
@@ -249,7 +244,7 @@ class MainWindow(QtWidgets.QWidget):
 
         self.info_table.resizeColumnsToContents()
         # keep the small header label for status
-        self.info_label.setText(f"Selected: {r.get('suggestion_text') or 'Unknown'}")
+        self.info_label.setText(f"{r.get('suggestion_text') or 'Unknown'}")
 
     def save_result(self):
         if self.last_result_bgr is None:
@@ -284,15 +279,7 @@ class MainWindow(QtWidgets.QWidget):
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
 
-    # with open("material_dark.qss", "r") as f:
-    #     app.setStyleSheet(f.read())
-
-    apply_stylesheet(app, theme='dark_teal.xml')
-
-    font = QtGui.QFont()
-    font.setFamilies(["JetBrains Mono", "Consolas", "Monaco", "Courier New"])
-    font.setPointSize(10)
-    app.setFont(font)
+    apply_stylesheet(app, theme='light_lightgreen.xml', css_file="custom_font.qss", invert_secondary=True)
 
     w = MainWindow()
     w.show()

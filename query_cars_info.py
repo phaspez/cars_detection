@@ -1,9 +1,17 @@
 import pandas as pd
 from thefuzz import process, fuzz
+import os
+import sys
 
-data_path = "cars_info/automobiles_cleaned_2025_10_13.csv"
 
-df = pd.read_csv(data_path, sep=";")
+def resource_path(relative_path: str) -> str:
+    # running as a PyInstaller onefile exe, files are unpacked to _MEIPASS
+    base = getattr(sys, "_MEIPASS", os.path.abspath("."))
+    return os.path.join(base, relative_path)
+
+data_path = resource_path(os.path.join("cars_info", "automobiles_cleaned_2025_10_14.csv"))
+
+df = pd.read_csv(data_path, sep=",")
 
 def find_cars(query: str, limit=5):
     clean_series = df['search_text'].dropna().astype(str)
