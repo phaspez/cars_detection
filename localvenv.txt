@@ -1,0 +1,4 @@
+// main module
+& "E:\SCHOOL WORK\NLN_Project\.venv\Scripts\Activate.ps1"
+// ocr module
+& "E:\SCHOOL WORK\yolo_detection_nln\ocr\.venv\Scripts\Activate.ps1"

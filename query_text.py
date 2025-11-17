@@ -9,12 +9,12 @@ def resource_path(relative_path: str) -> str:
     base = getattr(sys, "_MEIPASS", os.path.abspath("."))
     return os.path.join(base, relative_path)
 
-data_path = resource_path(os.path.join("cars_info", "automobiles_cleaned_2025_10_14.csv"))
+data_path = resource_path(os.path.join("cars_info", "automobiles_cleaned_2025_11_17.csv"))
 
 df = pd.read_csv(data_path, sep=",")
 
 def find_cars(query: str, limit=5):
-    clean_series = df['search_text'].dropna().astype(str)
+    clean_series = df['car_model'].dropna().astype(str)
     top_matches = process.extract(query, clean_series.tolist(), limit=limit, scorer=fuzz.partial_ratio)
 
     def _safe(val):
@@ -44,7 +44,6 @@ def find_cars(query: str, limit=5):
                     'score': int(score),
                     'original_index': int(original_index),
                     'brand_name': _safe(model.get('brand_name')),
-                    'engine_name': _safe(model.get('engine_name')),
                     'length_mm': _safe(model.get('length_mm')),
                     'width_mm': _safe(model.get('width_mm')),
                     'height_mm': _safe(model.get('height_mm')),
