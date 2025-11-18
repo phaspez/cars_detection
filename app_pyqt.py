@@ -136,6 +136,7 @@ class MainWindow(QtWidgets.QWidget):
         complete_string = logo_name
         try:
             ocr_results = run_ocr_pipeline(temp_path)
+            print("OCR Results: ", ocr_results)
             complete_string += " " + parse_ocr_results_to_string(ocr_results.get('trocr_texts', []))
         except Exception as e:
             print(f"OCR Error: {e}")
@@ -145,6 +146,7 @@ class MainWindow(QtWidgets.QWidget):
                 os.remove(temp_path)
 
         try:
+            print("search for query: ", complete_string)
             cars_response = find_cars(complete_string, limit=5)
             cars_results = cars_response.get('results', [])
             self.display_search_results(cars_results)

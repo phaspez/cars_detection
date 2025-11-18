@@ -1,5 +1,3 @@
-# python
-# File: ocr/no_ui_pipeline.py
 import os
 import cv2
 import numpy as np

@@ -13,9 +13,10 @@ data_path = resource_path(os.path.join("cars_info", "automobiles_cleaned_2025_11
 
 df = pd.read_csv(data_path, sep=",")
 
-def find_cars(query: str, limit=5):
+
+def find_cars(query: str, limit=5, scorer=fuzz.partial_ratio, return_metrics=False):
     clean_series = df['car_model'].dropna().astype(str)
-    top_matches = process.extract(query, clean_series.tolist(), limit=limit, scorer=fuzz.partial_ratio)
+    top_matches = process.extract(query, clean_series.tolist(), limit=limit, scorer=scorer)
 
     def _safe(val):
         if pd.isna(val):
@@ -27,8 +28,10 @@ def find_cars(query: str, limit=5):
 
     results = []
     seen_combinations = set()
+    scores = []
 
     for text_match, score in top_matches:
+        scores.append(score)
         matching_indices = clean_series[clean_series == text_match].index.tolist()
 
         for original_index in matching_indices[:limit]:
@@ -51,4 +54,13 @@ def find_cars(query: str, limit=5):
                     'rank': _safe(model.get('rank')),
                 })
 
-    return {'query': query, 'results': results}
+    response = {'query': query, 'results': results}
+
+    if return_metrics:
+        avg_score = sum(scores) / len(scores) if scores else 0
+        response['metrics'] = {
+            'avg_score': avg_score,
+            'scorer': scorer.__name__
+        }
+
+    return response
