@@ -60,12 +60,8 @@ class MainWindow(QtWidgets.QWidget):
         btn_choose = QtWidgets.QPushButton("Chọn ảnh")
         btn_choose.clicked.connect(self.choose_image)
 
-        btn_save = QtWidgets.QPushButton("Lưu ảnh & tên (TXT)")
-        btn_save.clicked.connect(self.save_result)
-
         btn_group = QtWidgets.QVBoxLayout()
         btn_group.addWidget(btn_choose)
-        btn_group.addWidget(btn_save)
         btn_group.addStretch(1)
 
         self.info_label = QtWidgets.QLabel("Chưa có ảnh")
@@ -151,6 +147,13 @@ class MainWindow(QtWidgets.QWidget):
             cars_results = cars_response.get('results', [])
             self.display_search_results(cars_results)
             self.info_label.setText(conf_text)
+
+            if cars_results:
+                first_result = cars_results[0]
+                name = first_result.get('suggestion_text') or "Unknown"
+                self.info_label.setText(name)
+            else:
+                self.info_label.setText(conf_text)
         except Exception as e:
             self.results_list.clear()
             self.info_table.clearContents()
@@ -165,7 +168,7 @@ class MainWindow(QtWidgets.QWidget):
             brand = r.get('brand_name') or ""
             score = r.get('score') or 0
             name = r.get("suggestion_text") or "Unknown"
-            text = f"{brand} {name} — {score}"
+            text = f"{name} — {score}"
             item = QtWidgets.QListWidgetItem(text)
             item.setData(QtCore.Qt.UserRole, r)
             if idx == 0:
@@ -211,30 +214,6 @@ class MainWindow(QtWidgets.QWidget):
 
         self.info_table.resizeColumnsToContents()
         self.info_label.setText(f"{r.get('suggestion_text') or 'Unknown'}")
-
-    def save_result(self):
-        if self.last_result_pil is None:
-            QtWidgets.QMessageBox.information(self, "Lưu", "Chưa có ảnh kết quả để lưu.")
-            return
-        save_path, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Lưu ảnh đã làm mờ", "", "JPEG (*.jpg);;PNG (*.png)")
-        if not save_path:
-            return
-        try:
-            self.last_result_pil.save(save_path)
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Lỗi lưu ảnh", f"Cannot save image:\n{e}")
-            return
-
-        txt_path = os.path.splitext(save_path)[0] + ".txt"
-        try:
-            with open(txt_path, "w", encoding="utf-8") as f:
-                name_to_write = self.last_logo_name if self.last_logo_name else "Unknown"
-                f.write(str(name_to_write))
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Lỗi lưu TXT", f"Cannot save TXT:\n{e}")
-            return
-
-        QtWidgets.QMessageBox.information(self, "Lưu xong", f"Saved image: {save_path}\nAnd logo name file: {txt_path}")
 
 
 if __name__ == "__main__":
